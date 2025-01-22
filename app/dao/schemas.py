@@ -11,19 +11,20 @@ class PyBaseModel(BaseModel):
 
 
 class User(PyBaseModel):
-    telegram_id: int = Field(unique_items=True)
-    name: str = Field(nullable=True)
+    telegram_id: int
+    name: str
     
 class Category(PyBaseModel):
-    name: str = Field(unique_items=True)
+    name: str
 
 class Subcategory(PyBaseModel):
-    category_id: 
-    name: 
+    category_id: int
+    name: str
 
 class Transaction(PyBaseModel):
-    date: 
-    user_id: 
-    category_id: 
-    subcategory_id: 
-    amount: 
+    date: str
+    user_id: int
+    category_id: int
+    subcategory_id: int
+    amount: int
+    comment: str
