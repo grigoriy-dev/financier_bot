@@ -1,0 +1,1 @@
+database_url = 'sqlite+aiosqlite:////content/drive/MyDrive/GitHub/financier_bot/data/fin.db'
