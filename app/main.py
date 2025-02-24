@@ -11,7 +11,6 @@ async def init_db():
         await conn.run_sync(Base.metadata.create_all)
 
 
-
 async def main():
     print(await home_page())
 
