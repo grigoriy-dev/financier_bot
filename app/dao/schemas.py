@@ -10,18 +10,18 @@ class PyBaseModel(BaseModel):
         validate_assignment = True
 
 
-class User(PyBaseModel):
+class UserSchema(PyBaseModel):
     telegram_id: int
     name: str
     
-class Category(PyBaseModel):
+class CategorySchema(PyBaseModel):
     name: str
 
-class Subcategory(PyBaseModel):
+class SubcategorySchema(PyBaseModel):
     category_id: int
     name: str
 
-class Transaction(PyBaseModel):
+class TransactionSchema(PyBaseModel):
     date: str
     user_id: int
     category_id: int

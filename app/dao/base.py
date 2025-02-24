@@ -21,15 +21,11 @@ class Base(AsyncAttrs, DeclarativeBase):
     __abstract__ = True
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-
-    @declared_attr.directive
-    def __tablename__(cls) -> str:
-        return cls.__name__.lower() + 's'
-
+        
 
 class DatabaseSession:
     @staticmethod
-    async def get_session(commit: bool = False) -> AsyncGenerator[AsyncSession, None]:
+    async def get_session(commit: bool = False) -> AsyncSession:
         async with async_session_maker() as session:
             try:
                 yield session
@@ -42,16 +38,20 @@ class DatabaseSession:
                 await session.close()
 
     @staticmethod
-    async def get_db() -> AsyncGenerator[AsyncSession, None]:
-        """Dependency для получения сессии без автоматического коммита"""
+    async def get_db() -> AsyncSession:
+        """
+        Возвращает сессию без автокоммита.
+        """
         async for session in DatabaseSession.get_session(commit=False):
-            yield session
+            return session
 
     @staticmethod
-    async def get_db_with_commit() -> AsyncGenerator[AsyncSession, None]:
-        """Dependency для получения сессии с автоматическим коммитом"""
+    async def get_db_with_commit() -> AsyncSession:
+        """
+        Возвращает сессию с автокоммитом.
+        """
         async for session in DatabaseSession.get_session(commit=True):
-            yield session
+            return session
 
 
 # Создаем экземпляр для удобного импорта

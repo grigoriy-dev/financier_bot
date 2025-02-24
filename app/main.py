@@ -1,8 +1,7 @@
 import asyncio
 
 from app.dao.base import engine, Base
-from app.dao.generic import BigGeneric
-from app.api.routers import home_page
+from app.api.routers import home_page, get_users, add_user
 
 
 # Функция для инициализации схемы базы данных
@@ -13,6 +12,8 @@ async def init_db():
 
 async def main():
     print(await home_page())
+    await get_users()
+    await add_user()
 
 
 if __name__ == "__main__":
