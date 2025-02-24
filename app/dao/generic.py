@@ -24,5 +24,15 @@ class MainGeneric:
             logger.error(f"Ошибка при поиске всех записей: {e}")
             raise
 
-    async def add_one(self, session: AsyncSession, values):
-        pass
+    async def add_one(self, session: AsyncSession, values: PyBaseModel):
+        # Добавить одну запись
+        new_instance = self.model(**values.dict())
+        session.add(new_instance)
+        try:
+            await session.flush()
+            logger.info(f"Запись {self.model.__name__} успешно добавлена.")
+        except SQLAlchemyError as e:
+            await session.rollback()
+            logger.error(f"Ошибка при добавлении записи: {e}")
+            raise e
+        return new_instance

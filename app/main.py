@@ -13,6 +13,7 @@ async def init_db():
 async def main():
     print(await home_page())
     await get_users()
+    
     await add_user()
 
 
