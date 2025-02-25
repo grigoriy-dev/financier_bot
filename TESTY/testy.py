@@ -2,26 +2,23 @@ import asyncio
 
 from app.dao.base import engine, Base
 from app.dao.schemas import UserSchema
-from app.api.routers import get_model_data
+from app.api.routers import home_page, get_model_data
 
 
-class TestGet:
+class GETY:
     @staticmethod
-    async def get_model_data():
-        # Выводим юзеров с помощью метода модели
-        users = await get_model_data("users")
+    async def test_get_tables():
+        # показываем таблицы
+        print(await home_page())
+
+    @staticmethod
+    async def test_get_model_data():
+        users = await get_model_data("User")
         for user in users: 
             print(user.to_dict())
 
-    @staticmethod
-    async def test_get_user_from_pydantic():
-        # Выводим юзеров с помощью сериализации через схему Pydantic
-        users = await get_users()
-        for user in users: 
-            print(UserSchema.model_validate(user).model_dump())
 
-
-class TestPost:
+class POTY:
     @staticmethod
     async def test_post():
         user_data = {"telegram_id": 325346463, "name": "Asoka"}
