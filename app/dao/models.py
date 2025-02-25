@@ -11,6 +11,12 @@ class User(Base):
     # связи
     transactions: Mapped[list["Transaction"]] = relationship(back_populates="user")
 
+    def to_dict(self):
+        return {
+            "telegram_id": self.id,
+            "name": self.name,
+        }
+
 class Category(Base):
     __tablename__ = 'categories'
     name: Mapped[str] = mapped_column(String, unique=True)

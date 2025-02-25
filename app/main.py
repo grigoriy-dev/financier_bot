@@ -1,7 +1,8 @@
 import asyncio
 
 from app.dao.base import engine, Base
-from app.api.routers import home_page, get_users, add_user
+from TESTY.testy import TestGet as GETY, TestPost as POTY
+from app.api.routers import home_page
 
 
 # Функция для инициализации схемы базы данных
@@ -11,12 +12,11 @@ async def init_db():
 
 
 async def main():
-    print(await home_page())
+    # Тесты
+    await home_page()
+    await GETY.get_model_data()
 
-    await get_users()
-    
-    user_data = {"telegram_id": 325346463, "name": "Asoka"}
-    #await add_user(user_data)
+    # Основная логика
 
 
 if __name__ == "__main__":

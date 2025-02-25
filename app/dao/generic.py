@@ -7,7 +7,6 @@ from loguru import logger
 from app.dao.schemas import PyBaseModel
 
 
-
 class MainGeneric:
     def __init__(self, model: Type):
         self.model = model
