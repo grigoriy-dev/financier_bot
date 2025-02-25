@@ -27,7 +27,7 @@ async def home_page():
         return {"tables": tables}
 
 # Универсальный роут
-@router.get("/models/{model_name}")
+@router.get("/{model_name}/get_all")
 async def get_model_data(model_name: str):
     model = MODELS.get(model_name)
     if not model:
@@ -40,8 +40,14 @@ async def get_model_data(model_name: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/users")
-async def add_user(user_data: UserSchema):
-    async with DB.get_session(commit=True) as session:
-        return await MainGeneric(User).add_one(session=session, values=user_data)
+@router.post("/{model_name}/add_one")
+async def add_one_model_data(model_name: str, user_data: UserSchema):
+    model = MODELS.get(model_name)
+    if not model:
+        raise HTTPException(status_code=404, detail="Model not found")
+    try:
+        async with DB.get_session(commit=True) as session:
+            return await MainGeneric(User).add_one(session=session, values=user_data)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
         

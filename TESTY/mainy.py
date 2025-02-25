@@ -16,6 +16,8 @@ async def main():
 
     await GETY.test_get_model_data()
 
+    # await POTY.test_add_one_model_data()
+
 
 if __name__ == "__main__":
     # Инициализация базы данных

@@ -13,7 +13,8 @@ class User(Base):
 
     def to_dict(self):
         return {
-            "telegram_id": self.id,
+            "id": self.id,
+            "telegram_id": self.telegram_id,
             "name": self.name,
         }
 
