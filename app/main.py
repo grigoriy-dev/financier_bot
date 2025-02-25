@@ -12,14 +12,15 @@ async def init_db():
 
 async def main():
     print(await home_page())
+
     await get_users()
     
-    await add_user()
+    user_data = {"telegram_id": 325346463, "name": "Asoka"}
+    #await add_user(user_data)
 
 
 if __name__ == "__main__":
     # Инициализация базы данных
     asyncio.run(init_db())
-
     # Запуск основной логики
     asyncio.run(main())

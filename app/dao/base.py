@@ -1,5 +1,6 @@
 from typing import AsyncGenerator
 from sqlalchemy import Integer
+from contextlib import asynccontextmanager
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession, AsyncAttrs
 from sqlalchemy.ext.declarative import declared_attr
@@ -25,6 +26,7 @@ class Base(AsyncAttrs, DeclarativeBase):
 
 class DatabaseSession:
     @staticmethod
+    @asynccontextmanager
     async def get_session(commit: bool = False) -> AsyncSession:
         async with async_session_maker() as session:
             try:
@@ -36,23 +38,3 @@ class DatabaseSession:
                 raise
             finally:
                 await session.close()
-
-    @staticmethod
-    async def get_db() -> AsyncSession:
-        """
-        Возвращает сессию без автокоммита.
-        """
-        async for session in DatabaseSession.get_session(commit=False):
-            return session
-
-    @staticmethod
-    async def get_db_with_commit() -> AsyncSession:
-        """
-        Возвращает сессию с автокоммитом.
-        """
-        async for session in DatabaseSession.get_session(commit=True):
-            return session
-
-
-# Создаем экземпляр для удобного импорта
-db = DatabaseSession()
