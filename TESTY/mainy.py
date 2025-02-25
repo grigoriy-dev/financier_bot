@@ -1,7 +1,7 @@
 import asyncio
 
 from app.dao.base import engine, Base
-from TESTY.testy import TestGet as GETY, TestPost as POTY
+from TESTY.testy import GETY, POTY
 
 
 # Функция для инициализации схемы базы данных
@@ -15,11 +15,6 @@ async def main():
     await GETY.test_get_tables()
 
     await GETY.test_get_model_data()
-    await GETY.get_model_data_API()
-
-    # await GETY.test_get_user_from_model()
-    # await GETY.test_get_user_from_pydantic()
-    # Основная логика
 
 
 if __name__ == "__main__":
