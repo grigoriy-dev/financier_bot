@@ -11,16 +11,21 @@ async def init_db():
 
 
 async def main():
-    # Получаем список таблиц
+    print("=== Получаем список таблиц:")
     await GETY.test_get_tables()
-    # Получаем все строки из выбранной таблицы
+    print("=== Получаем все записи из выбранной таблицы:")
     await GETY.test_get_model_data()
-    # Получаем пользователя по telegram_id
+    print("=== Получаем записи по фильтрам:")
+    await GETY.test_get_model_data_filters()
+    print("=== Получаем пользователя по telegram_id:")
     await GETY.test_get_user()
 
-    # Добавляем нового пользователя
-    #await POTY.test_add_one_model_data()
+    print("=== Добавляем одного пользователя:")
+    #await POTY.test_add_one_user()
 
+    print("=== Добавляем несколько пользователей:")
+    #await POTY.test_add_many_user()
+    print("=== ")
 
 if __name__ == "__main__":
     # Инициализация базы данных

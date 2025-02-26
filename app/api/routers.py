@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import inspect
 from functools import wraps
-from typing import List
+from typing import List, Optional, Dict, Any
 
 from app.dao.base import DatabaseSession as DB, engine
 from app.dao.schemas import UserSchema
@@ -37,9 +37,9 @@ async def home_page():
 
 @router.get("/{model_name}/get_all")
 @handle_model_errors
-async def get_model_data(model):
+async def get_model_data(model, filters: Optional[Dict[str, Any]] = None):
     async with DB.get_session(commit=False) as session:
-        result = await MainGeneric(model).find_all(session=session)
+        result = await MainGeneric(model).find_all(session=session, filters=filters)
         return result
 
 
@@ -53,7 +53,14 @@ async def get_user(model, tg_id: int):
 
 @router.post("/{model_name}/add_one")
 @handle_model_errors
-async def add_one_model_data(model, user_data: UserSchema):
+async def add_one_model_data(model, values):
     async with DB.get_session(commit=True) as session:
-        return await MainGeneric(model).add_one(session=session, values=user_data)
+        return await MainGeneric(model).add_one(session=session, values=values)
+
+
+@router.post("/{model_name}/add_many")
+@handle_model_errors
+async def add_many_model_data(model, values):
+    async with DB.get_session(commit=True) as session:
+        return await MainGeneric(model).add_many(session=session, values=values)
         
