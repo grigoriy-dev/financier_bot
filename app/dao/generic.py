@@ -22,6 +22,7 @@ from typing import Type, Generic, List, Any, Dict, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.future import select
+from sqlalchemy import select, func
 from loguru import logger
 
 from app.dao.schemas import PyBaseModel
@@ -58,7 +59,7 @@ class MainGeneric:
         else:
             filter_dict = filters if filters is not None else {}
         try:
-            query = select(self.model).filter_by(**filter_dict)
+            query = select(self.model).filter_by(**filter_dict).order_by(self.model.id.asc())
             result = await session.execute(query)
             records = result.scalars().all()
             logger.info(f"Найдено {len(records)} записей.")
@@ -66,6 +67,66 @@ class MainGeneric:
         except SQLAlchemyError as e:
             logger.error(f"Ошибка при поиске всех записей: {e}.")
             raise
+
+
+    async def find_all_paginated(
+                                self, session: AsyncSession, 
+                                filters: Optional[Dict[str, Any]] = None,
+                                page: int = 1,
+                                page_size: int = 10
+                                ) -> List[Any]:
+        """
+        Возвращает список записей с пагинацией на основе заданных фильтров.
+
+        Args:
+            session (AsyncSession): Асинхронная сессия SQLAlchemy для выполнения запросов.
+            filters (Optional[Dict[str, Any]]): Словарь / объект Pydantic / None. 
+            page (int): Номер страницы для пагинации. Начинается с 1. По умолчанию 1.
+            page_size (int): Количество записей на одной странице. По умолчанию 10.
+
+        Returns:
+            Dict[str, Any]: Словарь, содержащий:
+                - "records": Список записей для текущей страницы.
+                - "total_records": Общее количество записей, удовлетворяющих фильтрам.
+                - "total_pages": Общее количество страниц.
+
+        Raises:
+            SQLAlchemyError: Если произошла ошибка при выполнении запроса к базе данных.
+        """
+        logger.info(f"Поиск записей {self.model.__name__} по фильтрам: {filters}:")
+        if filters is not None and isinstance(filters, PyBaseModel):
+            filter_dict = filters.dict() 
+        else:
+            filter_dict = filters if filters is not None else {}
+        try:
+            # Запрос для подсчета общего количества записей
+            count_query = select(func.count()).select_from(self.model).filter_by(**filter_dict)
+            total_records = (await session.execute(count_query)).scalar()
+
+            # Вычисляем offset
+            offset = (page - 1) * page_size
+
+            # Запрос для получения записей с пагинацией
+            records_query = (
+                select(self.model)
+                .filter_by(**filter_dict)
+                .order_by(self.model.id.asc())
+                .limit(page_size)
+                .offset(offset)
+            )
+            records_result = await session.execute(records_query)
+            records = records_result.scalars().all()
+
+            # Возвращаем записи и общее количество
+            return {
+                "records": records,
+                "total_records": total_records,
+                "total_pages": (total_records + page_size - 1) // page_size
+            }
+        except SQLAlchemyError as e:
+            logger.error(f"Ошибка при поиске всех записей: {e}.")
+            raise
+
 
     async def find_user(self, session: AsyncSession, tg_id: int):
         """
