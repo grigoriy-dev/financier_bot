@@ -28,7 +28,7 @@ class Category(Base):
 class Subcategory(Base):
     __tablename__ = 'subcategories'
     category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"))
-    name: Mapped[str] = mapped_column(String, unique=True)
+    name: Mapped[str] = mapped_column(String)
     # связи
     category: Mapped["Category"] = relationship(back_populates="subcategories")
     transactions: Mapped[list["Transaction"]] = relationship(back_populates="subcategory")

@@ -22,9 +22,12 @@ async def main():
 
     print("=== Добавляем одного пользователя:")
     #await POTY.test_add_one_user()
-
     print("=== Добавляем несколько пользователей:")
     #await POTY.test_add_many_user()
+    print("=== Добавляем несколько категорий")
+    #await POTY.test_add_many_categories()
+    print("=== Добавляем несколько подкатегорий")
+    #await POTY.test_add_many_subcategories()
     print("=== ")
 
 if __name__ == "__main__":
