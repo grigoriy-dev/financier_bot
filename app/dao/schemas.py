@@ -12,7 +12,7 @@ class PyBaseModel(BaseModel):
 
 class UserSchema(PyBaseModel):
     telegram_id: int
-    name: str
+    username: str
     
 class CategorySchema(PyBaseModel):
     name: str

@@ -7,7 +7,7 @@ from app.dao.base import Base
 class User(Base):
     __tablename__ = 'users'
     telegram_id: Mapped[int] = mapped_column(Integer, unique=True)
-    name: Mapped[str] = mapped_column(String, nullable=True)
+    username: Mapped[str] = mapped_column(String, nullable=True)
     # связи
     transactions: Mapped[list["Transaction"]] = relationship(back_populates="user")
 
@@ -15,7 +15,7 @@ class User(Base):
         return {
             "id": self.id,
             "telegram_id": self.telegram_id,
-            "name": self.name,
+            "username": self.username,
         }
 
 class Category(Base):
@@ -36,7 +36,7 @@ class Subcategory(Base):
 class Transaction(Base):
     __tablename__ = 'transactions'
     date: Mapped[DateTime] = mapped_column(DateTime)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    user_telegram_id: Mapped[int] = mapped_column(ForeignKey("users.telegram_id"))
     category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"))
     subcategory_id: Mapped[int] = mapped_column(ForeignKey("subcategories.id"))
     amount: Mapped[int] = mapped_column(Integer)
@@ -45,3 +45,11 @@ class Transaction(Base):
     user: Mapped["User"] = relationship(back_populates="transactions")
     category: Mapped["Category"] = relationship(back_populates="transactions")
     subcategory: Mapped["Subcategory"] = relationship(back_populates="transactions")
+
+# Словарь с именами моделей, используется в роутерах API
+MODELS = {
+    "User": User,
+    "Category": Category,
+    "Subcategory": Subcategory,
+    "Transaction": Transaction,
+}

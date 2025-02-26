@@ -19,7 +19,22 @@ class MainGeneric:
             logger.info(f"Найдено {len(records)} записей.")
             return records
         except SQLAlchemyError as e:
-            logger.error(f"Ошибка при поиске всех записей: {e}")
+            logger.error(f"Ошибка при поиске всех записей: {e}.")
+            raise
+
+    async def find_user(self, session: AsyncSession, tg_id: int):
+        logger.info(f"Поиск {self.model.__name__} по telegram_id={tg_id}:")
+        try:
+            query = select(self.model).where(self.model.telegram_id==tg_id)
+            result = await session.execute(query)
+            user = result.scalars().first()
+            if user:
+                logger.info(f"Пользователь найден: {user.to_dict()}.")
+            else:
+                logger.info(f"Пользователь с telegram_id={tg_id} не найден.")
+            return user
+        except SQLAlchemyError as e:
+            logger.error(f"Ошибка при поиске записи: {e}.")
             raise
 
     async def add_one(self, session: AsyncSession, values: Dict[str, Any]):
@@ -30,9 +45,9 @@ class MainGeneric:
             session.add(new_record)
             await session.flush()  # Фиксируем изменения в базе данных
             await session.refresh(new_record)  # Обновляем объект, чтобы получить данные из БД (например, ID)
-            logger.info(f"Запись успешно добавлена: {new_record}")
+            logger.info(f"Запись успешно добавлена: {new_record.to_dict()}.")
             return new_record
         except SQLAlchemyError as e:
-            logger.error(f"Ошибка при добавлении записи: {e}")
+            logger.error(f"Ошибка при добавлении записи: {e}.")
             await session.rollback()
             raise
