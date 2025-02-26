@@ -1,5 +1,5 @@
 from typing import AsyncGenerator
-from sqlalchemy import Integer
+from sqlalchemy import Integer, inspect
 from contextlib import asynccontextmanager
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession, AsyncAttrs
@@ -15,13 +15,20 @@ async_session_maker = async_sessionmaker(engine, class_=AsyncSession)
 class Base(AsyncAttrs, DeclarativeBase):
     """
     Абстрактный базовый класс для моделей базы данных.
-    
-    Методы __tablename__: 
-    Автоматически генерирует имя таблицы на основе имени класса в нижнем регистре.
     """
     __abstract__ = True
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+
+    def to_dict(self):
+        """
+        Преобразует объект модели в словарь.
+
+        Returns:
+            dict: Словарь, где ключи — это названия колонок, а значения — данные из модели.
+        """
+        # Используем inspect для получения информации о колонках модели
+        return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
         
 
 class DatabaseSession:

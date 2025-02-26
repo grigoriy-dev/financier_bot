@@ -11,15 +11,7 @@ async def init_db():
 
 
 async def main():
-    # Тесты
-    await GETY.test_get_tables()
-
-    await GETY.test_get_model_data()
-    await GETY.get_model_data_API()
-
-    # await GETY.test_get_user_from_model()
-    # await GETY.test_get_user_from_pydantic()
-    # Основная логика
+    pass
 
 
 if __name__ == "__main__":
