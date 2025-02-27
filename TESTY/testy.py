@@ -2,7 +2,8 @@ import asyncio
 
 from app.dao.base import engine, Base
 from app.dao.schemas import UserSchema
-from app.api.routers import home_page, get_model_data, get_user, add_one_model_data, add_many_model_data
+from app.api.routers import home_page, get_user, add_one_model_data, add_many_model_data, get_many_model_data, get_many_transactions
+from TESTY.data_generator import generate_data
 
 
 class GETY:
@@ -11,20 +12,29 @@ class GETY:
         print(await home_page())
 
     @staticmethod
-    async def test_get_model_data():
-        model_name = "User"
-        filters = ""
-        users = await get_model_data(model_name)
-        for user in users: 
-            print(user.to_dict())
+    async def test_get_many_model_data():
+        model_name = "Category"
+        filters = {}
+        page = 1
+        page_size = 10
+        records = await get_many_model_data(model_name, filters, page, page_size)
+        print(f"Страница {records['page']}:")
+        for record in records["records"]:
+            print(record.to_dict())
+        print("Всего страниц:", records["total_pages"])
+        print("Всего записей:", records["total_records"])
 
     @staticmethod
-    async def test_get_model_data_filters():
-        model_name = "User"
-        filters = {"username": "LandoCalrissian"}
-        users = await get_model_data(model_name, filters)
-        for user in users: 
-            print(user.to_dict())
+    async def test_get_many_transactions():
+        filters = {}
+        #page = 2
+        #page_size = 20
+        records = await get_many_transactions(filters)
+        print(f"Страница {records['page']}:")
+        for record in records["records"]:
+            print(record)
+        print("Всего страниц:", records["total_pages"])
+        print("Всего записей:", records["total_records"])
 
     @staticmethod
     async def test_get_user():
@@ -85,4 +95,10 @@ class POTY:
             {"category_id": 2, "name": "Долги"},
             {"category_id": 2, "name": "Другое"}
 ]
+        await add_many_model_data(model_name=model_name, values=values)
+
+    @staticmethod
+    async def test_add_many_transactions():
+        model_name = "Transaction"
+        values = generate_data()
         await add_many_model_data(model_name=model_name, values=values)

@@ -11,23 +11,27 @@ async def init_db():
 
 
 async def main():
+    """Тесты GET запросов"""
     print("=== Получаем список таблиц:")
     await GETY.test_get_tables()
-    print("=== Получаем все записи из выбранной таблицы:")
-    await GETY.test_get_model_data()
-    print("=== Получаем записи по фильтрам:")
-    await GETY.test_get_model_data_filters()
+    print("=== Получаем записи по фильтрам с пагинацией:")
+    await GETY.test_get_many_model_data()
+    print("=== Получаем транзакции по фильтрам с пагинацией:")
+    await GETY.test_get_many_transactions()
     print("=== Получаем пользователя по telegram_id:")
-    await GETY.test_get_user()
+    #await GETY.test_get_user()
 
+    """Тесты POST запросов"""
     print("=== Добавляем одного пользователя:")
     #await POTY.test_add_one_user()
     print("=== Добавляем несколько пользователей:")
     #await POTY.test_add_many_user()
-    print("=== Добавляем несколько категорий")
+    print("=== Добавляем несколько категорий:")
     #await POTY.test_add_many_categories()
-    print("=== Добавляем несколько подкатегорий")
+    print("=== Добавляем несколько подкатегорий:")
     #await POTY.test_add_many_subcategories()
+    print("=== Добавляем несколько (50) рандомных транзакций:")
+    #await POTY.test_add_many_transactions()
     print("=== ")
 
 if __name__ == "__main__":

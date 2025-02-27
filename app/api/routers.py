@@ -6,20 +6,24 @@
 
 Основные функции:
 - Получение списка всех таблиц в базе данных.
-- Получение всех записей для указанной модели с возможностью фильтрации.
-- Получение одной записи по идентификатору.
+- Получение всех записей для указанной модели с возможностью фильтрации и пагинации.
+- Получение одной записи по идентификатору (например, telegram_id).
 - Добавление одной или нескольких записей в указанную модель.
+- Получение транзакций с объединением данных из связанных таблиц (пользователи, категории, подкатегории).
 
 Структура модуля:
 - `handle_model_errors`: Декоратор для обработки ошибок, связанных с моделями.
 - `home_page`: Эндпоинт для получения списка таблиц в базе данных.
-- `get_model_data`: Эндпоинт для получения всех записей модели с фильтрацией.
-- `get_user`: Эндпоинт для получения одной записи User по telegram id.
+- `get_many_model_data`: Эндпоинт для получения всех записей модели с фильтрацией и пагинацией.
+- `get_many_transactions`: Эндпоинт для получения транзакций с объединением данных из связанных таблиц.
+- `get_user`: Эндпоинт для получения одной записи User по telegram_id.
 - `add_one_model_data`: Эндпоинт для добавления одной записи в модель.
 - `add_many_model_data`: Эндпоинт для добавления нескольких записей в модель.
 
 Примечание:
 - Модели должны быть заранее зарегистрированы в `/app/dao/models.py/MODELS`.
+- Для работы с транзакциями используется метод `find_transactions`, который объединяет данные из таблиц `Transaction`, `User`, `Category` и `Subcategory`.
+- Логирование и обработка ошибок интегрированы в каждый эндпоинт.
 """
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -67,11 +71,16 @@ async def home_page():
         return {"tables": tables}
 
 
-@router.get("/{model_name}/get_all")
+@router.get("/{model_name}/get_many")
 @handle_model_errors
-async def get_model_data(model, filters: Optional[Dict[str, Any]] = None):
+async def get_many_model_data(
+        model, 
+        filters: Optional[Dict[str, Any]] = None,
+        page: int = 1,
+        page_size: int = 10
+        ):
     """
-    Получение всех записей для указанной модели.
+    Получение записей по фильтрам с пагинацией для указанной модели.
     
     Args:
         model: Модель SQLAlchemy.
@@ -81,8 +90,40 @@ async def get_model_data(model, filters: Optional[Dict[str, Any]] = None):
         Список записей, соответствующих фильтрам.
     """
     async with DB.get_session(commit=False) as session:
-        result = await MainGeneric(model).find_all(session=session, filters=filters)
+        result = await MainGeneric(model).find_many(
+            session=session, 
+            filters=filters,
+            page=page,
+            page_size=page_size
+            )
         return result
+
+
+@router.get("/{model_name}/get_many")
+async def get_many_transactions(
+        filters: Optional[Dict[str, Any]] = None,
+        page: int = 1,
+        page_size: int = 20
+        ):
+    """
+    Получение записей по фильтрам с пагинацией по Транзакциями с объединением данных 
+    из связанных таблиц.
+    
+    Args:
+        filters: Словарь фильтров для поиска записей (опционально).
+    
+    Returns:
+        Список записей, соответствующих фильтрам.
+    """
+    model = MODELS["Transaction"]
+    async with DB.get_session(commit=False) as session:
+        result = await MainGeneric(model).find_transactions(
+            session=session, 
+            filters=filters,
+            page=page,
+            page_size=page_size
+            )
+        return result        
 
 
 @router.get("/{model_name}/get_one")
