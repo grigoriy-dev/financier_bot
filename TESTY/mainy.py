@@ -11,17 +11,15 @@ async def init_db():
 
 
 async def main():
+    """Тесты GET запросов"""
     print("=== Получаем список таблиц:")
     await GETY.test_get_tables()
-    print("=== Получаем все записи из выбранной таблицы:")
-    #await GETY.test_get_model_data()
-    print("=== Получаем записи по фильтрам:")
-    #await GETY.test_get_model_data_filters()
     print("=== Получаем записи по фильтрам с пагинацией:")
-    await GETY.test_get_paginated_model_data()
+    await GETY.test_get_many_model_data()
     print("=== Получаем пользователя по telegram_id:")
     #await GETY.test_get_user()
 
+    """Тесты POST запросов"""
     print("=== Добавляем одного пользователя:")
     #await POTY.test_add_one_user()
     print("=== Добавляем несколько пользователей:")

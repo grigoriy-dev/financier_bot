@@ -5,7 +5,7 @@
 для моделей SQLAlchemy с использованием асинхронных сессий.
 
 Основные возможности:
-- Поиск всех записей модели с возможностью фильтрации.
+- Поиск всех записей модели с возможностью пагинации и фильтрации.
 - Поиск одной записи по уникальному идентификатору (например, telegram_id).
 - Добавление одной или нескольких записей в модель.
 - Обработка ошибок и логирование операций (Loguru).
@@ -39,42 +39,12 @@ class MainGeneric:
     def __init__(self, model: Type):
         self.model = model
 
-    async def find_all(self, session: AsyncSession, filters: Optional[Dict[str, Any]] = None) -> List[Any]:
-        """
-        Поиск всех записей модели с возможностью фильтрации.
-
-        Args:
-            session (AsyncSession): Асинхронная сессия SQLAlchemy.
-            filters (Optional[Dict[str, Any]]): Словарь фильтров или объект PyBaseModel.
-
-        Returns:
-            List[Any]: Список найденных записей.
-
-        Raises:
-            SQLAlchemyError: Если произошла ошибка при выполнении запроса.
-        """
-        logger.info(f"Поиск записей {self.model.__name__} по фильтрам: {filters}:")
-        if filters is not None and isinstance(filters, PyBaseModel):
-            filter_dict = filters.dict() 
-        else:
-            filter_dict = filters if filters is not None else {}
-        try:
-            query = select(self.model).filter_by(**filter_dict).order_by(self.model.id.asc())
-            result = await session.execute(query)
-            records = result.scalars().all()
-            logger.info(f"Найдено {len(records)} записей.")
-            return records
-        except SQLAlchemyError as e:
-            logger.error(f"Ошибка при поиске всех записей: {e}.")
-            raise
-
-
-    async def find_all_paginated(
-                                self, session: AsyncSession, 
-                                filters: Optional[Dict[str, Any]] = None,
-                                page: int = 1,
-                                page_size: int = 10
-                                ) -> List[Any]:
+    async def find_many(
+            self, session: AsyncSession, 
+            filters: Optional[Dict[str, Any]] = None,
+            page: int = 1,
+            page_size = None
+            ) -> List[Any]:
         """
         Возвращает список записей с пагинацией на основе заданных фильтров.
 

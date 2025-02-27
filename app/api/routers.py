@@ -67,31 +67,13 @@ async def home_page():
         return {"tables": tables}
 
 
-@router.get("/{model_name}/get_all")
+@router.get("/{model_name}/get_many")
 @handle_model_errors
-async def get_model_data(model, filters: Optional[Dict[str, Any]] = None):
-    """
-    Получение всех записей для указанной модели.
-    
-    Args:
-        model: Модель SQLAlchemy.
-        filters: Словарь фильтров для поиска записей (опционально).
-    
-    Returns:
-        Список записей, соответствующих фильтрам.
-    """
-    async with DB.get_session(commit=False) as session:
-        result = await MainGeneric(model).find_all(session=session, filters=filters)
-        return result
-
-
-@router.get("/{model_name}/get_paginated_data")
-@handle_model_errors
-async def get_paginated_model_data(
+async def get_many_model_data(
         model, 
         filters: Optional[Dict[str, Any]] = None,
         page: int = 1,
-        page_size: int = 10
+        page_size = None
         ):
     """
     Получение записей по фильтрам с пагинацией для указанной модели.
@@ -104,7 +86,7 @@ async def get_paginated_model_data(
         Список записей, соответствующих фильтрам.
     """
     async with DB.get_session(commit=False) as session:
-        result = await MainGeneric(model).find_all_paginated(
+        result = await MainGeneric(model).find_many(
             session=session, 
             filters=filters,
             page=page,
