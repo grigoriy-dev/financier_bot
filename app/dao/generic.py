@@ -26,6 +26,7 @@ from sqlalchemy import select, func
 from loguru import logger
 
 from app.dao.schemas import PyBaseModel
+from app.dao.models import User, Transaction, Category, Subcategory
 
 
 class MainGeneric:
@@ -43,7 +44,7 @@ class MainGeneric:
             self, session: AsyncSession, 
             filters: Optional[Dict[str, Any]] = None,
             page: int = 1,
-            page_size = None
+            page_size: int = 10
             ) -> List[Any]:
         """
         Возвращает список записей с пагинацией на основе заданных фильтров.
@@ -80,7 +81,7 @@ class MainGeneric:
             records_query = (
                 select(self.model)
                 .filter_by(**filter_dict)
-                .order_by(self.model.id.asc())
+                .order_by(self.model.date.asc())
                 .limit(page_size)
                 .offset(offset)
             )
@@ -96,6 +97,106 @@ class MainGeneric:
         except SQLAlchemyError as e:
             logger.error(f"Ошибка при поиске всех записей: {e}.")
             raise
+
+    async def find_transactions(
+                self, session: AsyncSession,
+        filters: Optional[Dict[str, Any]] = None,
+        page: int = 1,
+        page_size: int = 20
+        ) -> List[Dict[str, Any]]:
+        """
+        Возвращает список записей с объединением данных из связанных таблиц.
+
+        Args:
+            session (AsyncSession): Асинхронная сессия SQLAlchemy.
+            filters (Optional[Dict[str, Any]]): Фильтры для поиска.
+            page (int): Номер страницы.
+            page_size (int): Количество записей на странице.
+
+        Returns:
+            Dict[str, Any]: Словарь, содержащий:
+                - "records": Список записей с объединенными данными.
+                - "total_records": Общее количество записей, удовлетворяющих фильтрам.
+                - "total_pages": Общее количество страниц.
+        """
+        if filters is not None and isinstance(filters, PyBaseModel):
+            filter_dict = filters.dict()
+        else:
+            filter_dict = filters if filters is not None else {}
+
+        try:
+            # Подсчет общего количества записей
+            count_query = (
+                select(func.count())
+                .select_from(Transaction)
+                .join(User, Transaction.user_telegram_id == User.telegram_id)
+                .join(Category, Transaction.category_id == Category.id)
+                .join(Subcategory, Transaction.subcategory_id == Subcategory.id)
+            )
+            
+            # Применяем фильтры к запросу подсчета
+            for key, value in filter_dict.items():
+                if hasattr(Transaction, key):
+                    count_query = count_query.filter(getattr(Transaction, key) == value)
+                elif hasattr(User, key):
+                    count_query = count_query.filter(getattr(User, key) == value)
+                elif hasattr(Category, key):
+                    count_query = count_query.filter(getattr(Category, key) == value)
+                elif hasattr(Subcategory, key):
+                    count_query = count_query.filter(getattr(Subcategory, key) == value)
+
+            total_records = (await session.execute(count_query)).scalar()
+
+            # Создаем JOIN-запрос для получения данных
+            query = (
+                select(
+                    Transaction.id,
+                    Transaction.date,
+                    User.username.label("user_name"),
+                    Category.name.label("category_name"),
+                    Subcategory.name.label("subcategory_name"),
+                    Transaction.amount,
+                    Transaction.comment
+                )
+                .join(User, Transaction.user_telegram_id == User.telegram_id)
+                .join(Category, Transaction.category_id == Category.id)
+                .join(Subcategory, Transaction.subcategory_id == Subcategory.id)
+                .order_by(Transaction.date.asc())
+                .limit(page_size)
+                .offset((page - 1) * page_size)
+            )
+
+            # Применяем фильтры к основному запросу
+            for key, value in filter_dict.items():
+                if hasattr(Transaction, key):
+                    query = query.filter(getattr(Transaction, key) == value)
+                elif hasattr(User, key):
+                    query = query.filter(getattr(User, key) == value)
+                elif hasattr(Category, key):
+                    query = query.filter(getattr(Category, key) == value)
+                elif hasattr(Subcategory, key):
+                    query = query.filter(getattr(Subcategory, key) == value)
+
+            # Выполняем запрос
+            result = await session.execute(query)
+            records = result.mappings().all()
+
+            # Форматируем дату и возвращаем результат
+            formatted_records = []
+            for record in records:
+                formatted_record = dict(record)
+                formatted_record["date"] = formatted_record["date"].strftime("%Y-%m-%d %H:%M:%S")  # Форматируем дату
+                formatted_records.append(formatted_record)
+
+            return {
+                "page": page,
+                "records": formatted_records,
+                "total_records": total_records,
+                "total_pages": (total_records + page_size - 1) // page_size
+            }
+        except SQLAlchemyError as e:
+            logger.error(f"Ошибка при поиске записей с объединением: {e}")
+            raise 
 
 
     async def find_user(self, session: AsyncSession, tg_id: int):

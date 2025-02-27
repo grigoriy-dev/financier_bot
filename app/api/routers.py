@@ -73,7 +73,7 @@ async def get_many_model_data(
         model, 
         filters: Optional[Dict[str, Any]] = None,
         page: int = 1,
-        page_size = None
+        page_size: int = 10
         ):
     """
     Получение записей по фильтрам с пагинацией для указанной модели.
@@ -93,6 +93,33 @@ async def get_many_model_data(
             page_size=page_size
             )
         return result
+
+
+@router.get("/{model_name}/get_transactions")
+async def get_many_transactions(
+        filters: Optional[Dict[str, Any]] = None,
+        page: int = 1,
+        page_size: int = 20
+        ):
+    """
+    Получение записей по фильтрам с пагинацией по Транзакциями с объединением данных 
+    из связанных таблиц.
+    
+    Args:
+        filters: Словарь фильтров для поиска записей (опционально).
+    
+    Returns:
+        Список записей, соответствующих фильтрам.
+    """
+    model = MODELS["Transaction"]
+    async with DB.get_session(commit=False) as session:
+        result = await MainGeneric(model).find_transactions(
+            session=session, 
+            filters=filters,
+            page=page,
+            page_size=page_size
+            )
+        return result        
 
 
 @router.get("/{model_name}/get_one")
