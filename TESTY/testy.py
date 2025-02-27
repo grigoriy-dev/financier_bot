@@ -13,7 +13,7 @@ class GETY:
 
     @staticmethod
     async def test_get_many_model_data():
-        model_name = "User"
+        model_name = "Category"
         filters = {}
         page = 1
         page_size = 10
