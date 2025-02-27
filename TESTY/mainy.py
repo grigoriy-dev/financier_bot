@@ -15,7 +15,7 @@ async def main():
     print("=== Получаем список таблиц:")
     await GETY.test_get_tables()
     print("=== Получаем записи по фильтрам с пагинацией:")
-    #await GETY.test_get_many_model_data()
+    await GETY.test_get_many_model_data()
     print("=== Получаем транзакции по фильтрам с пагинацией:")
     await GETY.test_get_many_transactions()
     print("=== Получаем пользователя по telegram_id:")

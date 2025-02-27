@@ -13,12 +13,12 @@ class GETY:
 
     @staticmethod
     async def test_get_many_model_data():
-        model_name = "Transaction"
+        model_name = "User"
         filters = {}
         page = 1
         page_size = 10
         records = await get_many_model_data(model_name, filters, page, page_size)
-        print(f"Страница {page}:")
+        print(f"Страница {records['page']}:")
         for record in records["records"]:
             print(record.to_dict())
         print("Всего страниц:", records["total_pages"])

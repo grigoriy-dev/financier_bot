@@ -81,7 +81,7 @@ class MainGeneric:
             records_query = (
                 select(self.model)
                 .filter_by(**filter_dict)
-                .order_by(self.model.date.asc())
+                .order_by(self.model.id.asc())
                 .limit(page_size)
                 .offset(offset)
             )
@@ -90,6 +90,7 @@ class MainGeneric:
 
             # Возвращаем записи и общее количество
             return {
+                "page": page,
                 "records": records,
                 "total_records": total_records,
                 "total_pages": (total_records + page_size - 1) // page_size
