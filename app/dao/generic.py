@@ -101,12 +101,13 @@ class MainGeneric:
             logger.error(f"Ошибка при поиске всех записей: {e}.")
             raise
 
+
     async def find_transactions(
-                self, session: AsyncSession,
-        filters: Optional[Dict[str, Any]] = None,
-        page: int = 1,
-        page_size: int = 20
-        ) -> List[Dict[str, Any]]:
+            self, session: AsyncSession,
+            filters: Optional[Dict[str, Any]] = None,
+            page: int = 1,
+            page_size: int = 20
+    ) -> Dict[str, Any]:
         """
         Возвращает список записей с объединением данных из связанных таблиц.
 
@@ -122,36 +123,15 @@ class MainGeneric:
                 - "total_records": Общее количество записей, удовлетворяющих фильтрам.
                 - "total_pages": Общее количество страниц.
         """
+
         if filters is not None and isinstance(filters, PyBaseModel):
             filter_dict = filters.dict()
         else:
             filter_dict = filters if filters is not None else {}
 
         try:
-            # Подсчет общего количества записей
-            count_query = (
-                select(func.count())
-                .select_from(Transaction)
-                .join(User, Transaction.user_telegram_id == User.telegram_id)
-                .join(Category, Transaction.category_id == Category.id)
-                .join(Subcategory, Transaction.subcategory_id == Subcategory.id)
-            )
-            
-            # Применяем фильтры к запросу подсчета
-            for key, value in filter_dict.items():
-                if hasattr(Transaction, key):
-                    count_query = count_query.filter(getattr(Transaction, key) == value)
-                elif hasattr(User, key):
-                    count_query = count_query.filter(getattr(User, key) == value)
-                elif hasattr(Category, key):
-                    count_query = count_query.filter(getattr(Category, key) == value)
-                elif hasattr(Subcategory, key):
-                    count_query = count_query.filter(getattr(Subcategory, key) == value)
-
-            total_records = (await session.execute(count_query)).scalar()
-
-            # Создаем JOIN-запрос для получения данных
-            query = (
+            # Базовый запрос с JOIN и фильтрами
+            base_query = (
                 select(
                     Transaction.id,
                     Transaction.date,
@@ -164,31 +144,38 @@ class MainGeneric:
                 .join(User, Transaction.user_telegram_id == User.telegram_id)
                 .join(Category, Transaction.category_id == Category.id)
                 .join(Subcategory, Transaction.subcategory_id == Subcategory.id)
-                .order_by(Transaction.date.asc())
+            )
+
+            # Применяем фильтры
+            for key, value in filter_dict.items():
+                if hasattr(Transaction, key):
+                    base_query = base_query.filter(getattr(Transaction, key) == value)
+                elif hasattr(User, key):
+                    base_query = base_query.filter(getattr(User, key) == value)
+                elif hasattr(Category, key):
+                    base_query = base_query.filter(getattr(Category, key) == value)
+                elif hasattr(Subcategory, key):
+                    base_query = base_query.filter(getattr(Subcategory, key) == value)
+
+            # Используем CTE для подсчёта и пагинации
+            cte = base_query.cte("filtered_transactions")
+            count_query = select(func.count()).select_from(cte)
+            total_records = (await session.execute(count_query)).scalar()
+
+            paginated_query = (
+                select(cte)
+                .order_by(cte.c.date.asc())
                 .limit(page_size)
                 .offset((page - 1) * page_size)
             )
 
-            # Применяем фильтры к основному запросу
-            for key, value in filter_dict.items():
-                if hasattr(Transaction, key):
-                    query = query.filter(getattr(Transaction, key) == value)
-                elif hasattr(User, key):
-                    query = query.filter(getattr(User, key) == value)
-                elif hasattr(Category, key):
-                    query = query.filter(getattr(Category, key) == value)
-                elif hasattr(Subcategory, key):
-                    query = query.filter(getattr(Subcategory, key) == value)
-
-            # Выполняем запрос
-            result = await session.execute(query)
+            result = await session.execute(paginated_query)
             records = result.mappings().all()
 
-            # Форматируем дату и возвращаем результат
             formatted_records = []
             for record in records:
                 formatted_record = dict(record)
-                formatted_record["date"] = formatted_record["date"].strftime("%Y-%m-%d %H:%M:%S")  # Форматируем дату
+                formatted_record["date"] = formatted_record["date"].strftime("%Y-%m-%d %H:%M:%S")
                 formatted_records.append(formatted_record)
 
             return {
@@ -199,7 +186,7 @@ class MainGeneric:
             }
         except SQLAlchemyError as e:
             logger.error(f"Ошибка при поиске записей с объединением: {e}")
-            raise 
+            raise
 
 
     async def find_user(self, session: AsyncSession, tg_id: int):
