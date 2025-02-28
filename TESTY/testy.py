@@ -3,6 +3,7 @@ import asyncio
 from app.dao.base import engine, Base
 from app.dao.schemas import UserSchema
 from app.api.routers import home_page, get_user, add_one_model_data, add_many_model_data, get_many_model_data, get_many_transactions
+from app.api.reports import get_report
 from TESTY.data_generator import generate_data
 
 
@@ -13,28 +14,35 @@ class GETY:
 
     @staticmethod
     async def test_get_many_model_data():
-        model_name = "Category"
+        model_name = "User"
         filters = {}
-        page = 1
-        page_size = 10
-        records = await get_many_model_data(model_name, filters, page, page_size)
-        print(f"Страница {records['page']}:")
+        records = await get_many_model_data(model_name, filters, page=1)
+        print(f"Страница {records['page']} / {records['total_pages']}:")
         for record in records["records"]:
             print(record.to_dict())
-        print("Всего страниц:", records["total_pages"])
         print("Всего записей:", records["total_records"])
+
 
     @staticmethod
     async def test_get_many_transactions():
         filters = {}
-        #page = 2
-        #page_size = 20
         records = await get_many_transactions(filters)
-        print(f"Страница {records['page']}:")
+        print(f"Страница {records['page']} / {records['total_pages']}:")
         for record in records["records"]:
             print(record)
-        print("Всего страниц:", records["total_pages"])
         print("Всего записей:", records["total_records"])
+    
+
+    @staticmethod
+    async def test_get_report():
+        period = "month"
+        filters = {}
+        records = await get_report(period, filters)
+        print(f"Страница {records['page']} / {records['total_pages']}:")
+        for record in records["records"]:
+            print(record)
+        print("Всего записей:", records["total_records"])
+
 
     @staticmethod
     async def test_get_user():

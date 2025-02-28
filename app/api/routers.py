@@ -99,7 +99,7 @@ async def get_many_model_data(
         return result
 
 
-@router.get("/{model_name}/get_many")
+@router.get("/{model_name}/get_many_transactions")
 async def get_many_transactions(
         filters: Optional[Dict[str, Any]] = None,
         page: int = 1,
