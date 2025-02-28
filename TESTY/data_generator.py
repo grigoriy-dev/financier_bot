@@ -81,13 +81,13 @@ def random_date(start, end):
     return start + timedelta(days=random_days, seconds=random_seconds)
 
 # Начальная и конечная даты
-start_date = datetime(2025, 1, 1)
+start_date = datetime(2023, 1, 1)
 end_date = datetime(2025, 2, 25)
 
 # Генерация 50 записей
 def generate_data():
     transactions = []
-    for _ in range(50):
+    for _ in range(10000):
         date = random_date(start_date, end_date)
         user = random.choice(users)
         category_id = random.choices([1, 2], weights=[0.3, 0.7])[0]  # 30% доходы, 70% расходы

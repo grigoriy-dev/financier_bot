@@ -26,6 +26,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.future import select
 from sqlalchemy import select, func
 from loguru import logger
+from datetime import datetime, timedelta
 
 from app.dao.schemas import PyBaseModel
 from app.dao.models import User, Transaction, Category, Subcategory
@@ -101,12 +102,13 @@ class MainGeneric:
             logger.error(f"Ошибка при поиске всех записей: {e}.")
             raise
 
-
     async def find_transactions(
             self, session: AsyncSession,
             filters: Optional[Dict[str, Any]] = None,
             page: int = 1,
-            page_size: int = 20
+            page_size: int = 20,
+            start_date: Optional[datetime] = None,
+            end_date: Optional[datetime] = None
     ) -> Dict[str, Any]:
         """
         Возвращает список записей с объединением данных из связанных таблиц.
@@ -116,6 +118,8 @@ class MainGeneric:
             filters (Optional[Dict[str, Any]]): Фильтры для поиска.
             page (int): Номер страницы.
             page_size (int): Количество записей на странице.
+            start_date (Optional[datetime]): Начальная дата для фильтрации.
+            end_date (Optional[datetime]): Конечная дата для фильтрации.
 
         Returns:
             Dict[str, Any]: Словарь, содержащий:
@@ -156,6 +160,12 @@ class MainGeneric:
                     base_query = base_query.filter(getattr(Category, key) == value)
                 elif hasattr(Subcategory, key):
                     base_query = base_query.filter(getattr(Subcategory, key) == value)
+
+            # Фильтрация по датам
+            if start_date:
+                base_query = base_query.filter(Transaction.date >= start_date)
+            if end_date:
+                base_query = base_query.filter(Transaction.date <= end_date)
 
             # Используем CTE для подсчёта и пагинации
             cte = base_query.cte("filtered_transactions")
@@ -276,3 +286,34 @@ class MainGeneric:
             logger.error(f"Ошибка при добавлении записей: {e}.")
             await session.rollback()
             raise
+
+    async def get_report(
+        self, session: AsyncSession,
+        start_date: datetime,
+        end_date: datetime,
+        filters: Optional[Dict[str, Any]] = None,
+        page: int = 1,
+        page_size: int = 20
+    ) -> Dict[str, Any]:
+        """
+        Формирует отчёт за указанный период.
+
+        Args:
+            session (AsyncSession): Асинхронная сессия SQLAlchemy.
+            start_date (datetime): Начальная дата периода.
+            end_date (datetime): Конечная дата периода.
+            filters (Optional[Dict[str, Any]]): Дополнительные фильтры.
+            page (int): Номер страницы.
+            page_size (int): Количество записей на странице.
+
+        Returns:
+            Dict[str, Any]: Отчёт за указанный период.
+        """
+        return await self.find_transactions(
+            session=session,
+            filters=filters,
+            page=page,
+            page_size=page_size,
+            start_date=start_date,
+            end_date=end_date
+        )

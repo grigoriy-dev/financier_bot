@@ -2,19 +2,24 @@
 
 """
 
-from fastapi import HTTPException
+from fastapi import APIRouter, HTTPException
 from datetime import datetime, timedelta
 
-from app.api.routers import router
-from app.cache.redis import get_redis
+from app.dao.base import DatabaseSession as DB
+from app.dao.generic import MainGeneric
+from app.dao.models import MODELS
+#from app.cache.redis import get_redis
 
 
-@router.get("/reports/get_free_report")
+router = APIRouter(prefix="/reports", tags=["Reports"])
+
+
+@router.get("/get_free_report")
 async def get_free_report():
     pass
 
-@router.get("/reports/{period}")
-async def get_report(period: str):    
+@router.get("/{period}")
+async def get_report(period: str, filters):    
     """
     Получение отчёта за указанный период.
     Поддерживаемые периоды: month, 3months, 6months, year, all.
@@ -35,12 +40,23 @@ async def get_report(period: str):
         raise HTTPException(status_code=400, detail="Неподдерживаемый период")
 
     # Генерация уникального ключа для кеша
-    cache_key = f"report:{period}:{start_date.date()}:{end_date.date()}"
+    #cache_key = f"report:{period}:{start_date.date()}:{end_date.date()}"
 
     # Подключение к Redis
-    redis = await get_redis()
+    #redis = await get_redis()
 
     # Попытка получить данные из кеша
-    cached_report = await redis.get(cache_key)
-    if cached_report:
-        return json.loads(cached_report)
+    #cached_report = await redis.get(cache_key)
+    #if cached_report:
+        #return json.loads(cached_report)
+
+    # Если данных в кеше нет, формируем отчёт
+    async with DB.get_session(commit=False) as session:
+        # Запрос к базе данных для формирования отчёта
+        model = MODELS["Transaction"]
+        report = await MainGeneric(model).get_report(session, start_date, end_date, filters)
+
+        # Сохраняем отчёт в кеше на 1 час (3600 секунд)
+        #await redis.set(cache_key, json.dumps(report), expire=3600)
+
+        return report
