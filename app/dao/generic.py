@@ -105,6 +105,7 @@ class MainGeneric:
     async def find_transactions(
             self, session: AsyncSession,
             filters: Optional[Dict[str, Any]] = None,
+            paginate: bool = True,
             page: int = 1,
             page_size: int = 20,
             start_date: Optional[datetime] = None,
@@ -127,6 +128,8 @@ class MainGeneric:
                 - "total_records": Общее количество записей, удовлетворяющих фильтрам.
                 - "total_pages": Общее количество страниц.
         """
+        
+        logger.info(f"Поиск записей {self.model.__name__} по фильтрам: {filters}")
 
         if filters is not None and isinstance(filters, PyBaseModel):
             filter_dict = filters.dict()
@@ -171,6 +174,23 @@ class MainGeneric:
             cte = base_query.cte("filtered_transactions")
             count_query = select(func.count()).select_from(cte)
             total_records = (await session.execute(count_query)).scalar()
+
+            logger.info(f"Найдено записей {total_records}")
+
+            # Если пагинация отключена, возвращаем все записи
+            if not paginate:
+                result = await session.execute(select(cte).order_by(cte.c.date.asc()))
+                records = result.mappings().all()
+                formatted_records = [
+                    {**dict(record), "date": record["date"].strftime("%Y-%m-%d %H:%M:%S")}
+                    for record in records
+                ]
+                return {
+                    "records": formatted_records,
+                    "total_records": total_records,
+                    "total_pages": 1  # Для совместимости с интерфейсом
+                }
+
 
             paginated_query = (
                 select(cte)

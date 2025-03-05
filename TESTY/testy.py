@@ -25,23 +25,28 @@ class GETY:
 
     @staticmethod
     async def test_get_many_transactions():
-        filters = {}
-        records = await get_many_transactions(filters)
-        print(f"Страница {records['page']} / {records['total_pages']}:")
-        for record in records["records"]:
-            print(record)
-        print("Всего записей:", records["total_records"])
+        # тестовые параметры
+        period = "3months"
+        paginate = True
+        filters = {"username": "LandoCalrissian", "name": "Доход"}
+
+        records = await get_many_transactions(
+            period=period,
+            filters=filters
+)
+    
+        if paginate == False:
+            print("ONE BILLION TRANSACTION LIST > ...")
+        else:
+            print(f"Страница {records['page']} / {records['total_pages']}:")
+            for record in records["records"]:
+                print(record)
+            print("Всего записей:", records["total_records"])
     
 
     @staticmethod
     async def test_get_report():
-        period = "month"
-        filters = {}
-        records = await get_report(period, filters)
-        print(f"Страница {records['page']} / {records['total_pages']}:")
-        for record in records["records"]:
-            print(record)
-        print("Всего записей:", records["total_records"])
+        pass
 
 
     @staticmethod
