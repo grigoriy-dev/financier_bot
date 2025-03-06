@@ -1,9 +1,10 @@
 import asyncio
+from fastapi import FastAPI
+import uvicorn
 
 from app.api.routers import router as model_router
-from app.api.reports import router as reports_router
 from app.dao.base import engine, Base
-from TESTY.testy import TestGet as GETY, TestPost as POTY
+from app.bot.init_bot import dp, bot
 
 
 # Функция для инициализации схемы базы данных
@@ -15,11 +16,10 @@ async def init_db():
 async def init_api():
     app = FastAPI()
     app.include_router(model_router)
-    app.include_router(reports_router)
 
 
 async def main():
-    pass
+    await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
