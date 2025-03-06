@@ -2,8 +2,7 @@ import asyncio
 
 from app.dao.base import engine, Base
 from app.dao.schemas import UserSchema
-from app.api.routers import home_page, get_user, add_one_model_data, add_many_model_data, get_many_model_data, get_many_transactions
-from app.api.reports import get_report
+from app.api.routers import home_page, get_user, add_one_model_data, add_many_model_data, get_many_model_data, get_many_transactions, get_report
 from TESTY.data_generator import generate_data
 
 
@@ -25,8 +24,14 @@ class GETY:
 
     @staticmethod
     async def test_get_many_transactions():
-        filters = {}
-        records = await get_many_transactions(filters)
+        # тестовые параметры
+        period = "3months"
+        filters = {"username": "LandoCalrissian", "name": "Доход"}
+
+        records = await get_many_transactions(
+            period=period,
+            filters=filters
+)
         print(f"Страница {records['page']} / {records['total_pages']}:")
         for record in records["records"]:
             print(record)
@@ -35,13 +40,16 @@ class GETY:
 
     @staticmethod
     async def test_get_report():
+        # тестовые параметры
         period = "month"
-        filters = {}
-        records = await get_report(period, filters)
-        print(f"Страница {records['page']} / {records['total_pages']}:")
-        for record in records["records"]:
-            print(record)
-        print("Всего записей:", records["total_records"])
+        filters = {"username": "LandoCalrissian", "name": "Доход"}
+
+        records = await get_report(
+            paginate=False, 
+            period=period,
+            filters=filters
+)      
+        print(records)
 
 
     @staticmethod

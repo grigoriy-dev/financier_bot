@@ -31,6 +31,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import inspect
 from functools import wraps
+import pandas as pd
 from typing import List, Optional, Dict, Any
 
 from app.dao.base import DatabaseSession as DB, engine
@@ -57,6 +58,39 @@ def handle_model_errors(func):
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
     return wrapper
+
+# Вспомогательная функция для получения данных о транзакциях
+async def fetch_transactions(
+    period: str = "all",
+    filters: Optional[Dict[str, Any]] = None,
+    paginate: bool = False,
+    page: int = 1,
+    page_size: int = 10
+) -> Dict[str, Any]:
+    """
+    Вспомогательная функция для получения данных о транзакциях.
+
+    Args:
+        period (str): Период, за который нужно получить данные. По умолчанию "all".
+        filters (Optional[Dict[str, Any]]): Фильтры для выборки данных. По умолчанию None.
+        paginate (bool): Флаг, указывающий, нужно ли использовать пагинацию. По умолчанию False.
+        page (int): Номер страницы для пагинации. По умолчанию 1.
+        page_size (int): Количество записей на странице. По умолчанию 20.
+
+    Returns:
+        Dict[str, Any]: Результат запроса, содержащий записи и метаданные (если используется пагинация).
+    """
+    model = MODELS["Transaction"]
+    async with DB.get_session(commit=False) as session:
+        result = await MainGeneric(model).find_transactions(
+            session=session,
+            filters=filters,
+            paginate=paginate,
+            page=page,
+            page_size=page_size,
+            period=period
+        )
+    return result
 
 
 @router.get("/")
@@ -99,35 +133,72 @@ async def get_many_model_data(
         return result
 
 
-@router.get("/{model_name}/get_many_transactions")
+@router.get("/{model_name}/get_many")
 async def get_many_transactions(
-        filters: Optional[Dict[str, Any]] = None,
-        page: int = 1,
-        page_size: int = 20
-        ):
+    period: str = "all",
+    filters: Optional[Dict[str, Any]] = None,
+    paginate: bool = True,
+    page: int = 1,
+    page_size: int = 10
+) -> Dict[str, Any]:
     """
-    Получение записей по фильтрам с пагинацией по Транзакциями с объединением данных 
-    из связанных таблиц.
-    
+    Получение записей по фильтрам за указанный период с пагинацией по Транзакциям с объединением данных из связанных таблиц.
+
     Args:
-        filters: Словарь фильтров для поиска записей (опционально).
-    
+        period (str): Период, за который нужно получить данные. По умолчанию "all".
+        filters (Optional[Dict[str, Any]]): Фильтры для выборки данных. По умолчанию None.
+        paginate (bool): Флаг, указывающий, нужно ли использовать пагинацию. По умолчанию True.
+        page (int): Номер страницы для пагинации. По умолчанию 1.
+        page_size (int): Количество записей на странице. По умолчанию 20.
+
     Returns:
-        Список записей, соответствующих фильтрам.
+        Dict[str, Any]: Результат запроса, содержащий записи и метаданные (если используется пагинация).
     """
-    model = MODELS["Transaction"]
-    async with DB.get_session(commit=False) as session:
-        result = await MainGeneric(model).find_transactions(
-            session=session, 
-            filters=filters,
-            page=page,
-            page_size=page_size
+    return await fetch_transactions(period, filters, paginate, page, page_size)
+
+
+@router.get("/{model_name}/{period}/report")
+async def get_report(
+    period: str = "all",
+    filters: Optional[Dict[str, Any]] = None,
+    paginate: bool = False,
+    page: int = 1,
+    page_size: int = 20,
+    format: str = "csv"
+) -> Dict[str, str]:
+    """
+    Формирование отчёта в формате CSV или XLSX на основе данных о транзакциях.
+    """
+    try:
+        report = await fetch_transactions(period, filters, paginate, page, page_size)
+
+        # Создаем DataFrame из полученных данных
+        df = pd.DataFrame(report["records"])
+
+        if format == "csv":
+            filename = 'data/output.csv'
+            df.to_csv(filename, index=False)
+            return {"msg": "Данные выгружены в CSV"}
+        elif format == "xlsx":
+            filename = 'data/output.xlsx'
+            df.to_excel(filename, index=False)
+            return {"msg": "Данные выгружены в XLSX"}
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="Неподдерживаемый формат выгрузки. Доступные форматы: csv, xlsx"
             )
-        return result        
 
 
-@router.get("/{model_name}/get_one")
-@handle_model_errors
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Произошла ошибка при выгрузке данных: {str(e)}"
+        )   
+
+
+@router.get("/user/get_one")
 async def get_user(model, tg_id: int):
     """
     Получение одной записи по идентификатору пользователя (tg_id).
@@ -139,6 +210,7 @@ async def get_user(model, tg_id: int):
     Returns:
         Запись, соответствующая указанному tg_id.
     """
+    model = MODELS["User"]
     async with DB.get_session(commit=False) as session:
         result = await MainGeneric(model).find_user(session=session, tg_id=tg_id)
         return result

@@ -22,7 +22,7 @@ async def main():
     #await GETY.test_get_user()
 
     print("=== Получаем отчёт")
-    #await GETY.test_get_report()
+    await GETY.test_get_report()
 
     """Тесты POST запросов"""
     print("=== Добавляем одного пользователя:")
@@ -33,6 +33,7 @@ async def main():
     #await POTY.test_add_many_categories()
     print("=== Добавляем несколько подкатегорий:")
     #await POTY.test_add_many_subcategories()
+
     print("=== Добавляем несколько (10000) рандомных транзакций:")
     #await POTY.test_add_many_transactions()
     print("=== ")

@@ -20,6 +20,7 @@
 - Метод `find_transactions` предназначен для работы с моделью `Transaction` и объединяет данные из связанных таблиц.
 """
 
+from datetime import datetime, timedelta
 from typing import Type, Generic, List, Any, Dict, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
@@ -105,10 +106,10 @@ class MainGeneric:
     async def find_transactions(
             self, session: AsyncSession,
             filters: Optional[Dict[str, Any]] = None,
+            paginate: bool = True,
             page: int = 1,
-            page_size: int = 20,
-            start_date: Optional[datetime] = None,
-            end_date: Optional[datetime] = None
+            page_size: int = 10,
+            period: str = "all"
     ) -> Dict[str, Any]:
         """
         Возвращает список записей с объединением данных из связанных таблиц.
@@ -127,6 +128,22 @@ class MainGeneric:
                 - "total_records": Общее количество записей, удовлетворяющих фильтрам.
                 - "total_pages": Общее количество страниц.
         """
+        
+        end_date = datetime.now()
+        if period == "month":
+            start_date = end_date - timedelta(days=30)
+        elif period == "3months":
+            start_date = end_date - timedelta(days=90)
+        elif period == "6months":
+            start_date = end_date - timedelta(days=180)
+        elif period == "year":
+            start_date = end_date - timedelta(days=365)
+        elif period == "all":
+            start_date = datetime.min  # Начало всех времён
+        else:
+            raise HTTPException(status_code=400, detail="Неподдерживаемый период")
+
+        logger.info(f"Поиск записей {self.model.__name__} за период {period}по фильтрам: {filters}")
 
         if filters is not None and isinstance(filters, PyBaseModel):
             filter_dict = filters.dict()
@@ -171,6 +188,23 @@ class MainGeneric:
             cte = base_query.cte("filtered_transactions")
             count_query = select(func.count()).select_from(cte)
             total_records = (await session.execute(count_query)).scalar()
+
+            logger.info(f"Найдено записей {total_records}")
+
+            # Если пагинация отключена, возвращаем все записи
+            if not paginate:
+                result = await session.execute(select(cte).order_by(cte.c.date.asc()))
+                records = result.mappings().all()
+                formatted_records = [
+                    {**dict(record), "date": record["date"].strftime("%Y-%m-%d %H:%M:%S")}
+                    for record in records
+                ]
+                return {
+                    "records": formatted_records,
+                    "total_records": total_records,
+                    "total_pages": 1  # Для совместимости с интерфейсом
+                }
+
 
             paginated_query = (
                 select(cte)
