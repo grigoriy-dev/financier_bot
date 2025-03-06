@@ -31,6 +31,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import inspect
 from functools import wraps
+import pandas as pd
 from typing import List, Optional, Dict, Any
 
 from app.dao.base import DatabaseSession as DB, engine
@@ -57,6 +58,39 @@ def handle_model_errors(func):
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
     return wrapper
+
+# Вспомогательная функция для получения данных о транзакциях
+async def fetch_transactions(
+    period: str = "all",
+    filters: Optional[Dict[str, Any]] = None,
+    paginate: bool = False,
+    page: int = 1,
+    page_size: int = 20
+) -> Dict[str, Any]:
+    """
+    Вспомогательная функция для получения данных о транзакциях.
+
+    Args:
+        period (str): Период, за который нужно получить данные. По умолчанию "all".
+        filters (Optional[Dict[str, Any]]): Фильтры для выборки данных. По умолчанию None.
+        paginate (bool): Флаг, указывающий, нужно ли использовать пагинацию. По умолчанию False.
+        page (int): Номер страницы для пагинации. По умолчанию 1.
+        page_size (int): Количество записей на странице. По умолчанию 20.
+
+    Returns:
+        Dict[str, Any]: Результат запроса, содержащий записи и метаданные (если используется пагинация).
+    """
+    model = MODELS["Transaction"]
+    async with DB.get_session(commit=False) as session:
+        result = await MainGeneric(model).find_transactions(
+            session=session,
+            filters=filters,
+            paginate=paginate,
+            page=page,
+            page_size=page_size,
+            period=period
+        )
+    return result
 
 
 @router.get("/")
@@ -99,46 +133,75 @@ async def get_many_model_data(
         return result
 
 
-@router.get("/get_many_transactions")
+@router.get("/{model_name}/get_many")
 async def get_many_transactions(
-        period: str = "all",
-        filters: Optional[Dict[str, Any]] = None,
-        paginate: bool = True,
-        page: int = 1,
-        page_size: int = 20
-        ):
+    period: str = "all",
+    filters: Optional[Dict[str, Any]] = None,
+    paginate: bool = True,
+    page: int = 1,
+    page_size: int = 20
+) -> Dict[str, Any]:
     """
-    Получение записей по фильтрам за указанный период с пагинацией по Транзакциями с объединением данных из связанных таблиц.
-    
+    Получение записей по фильтрам за указанный период с пагинацией по Транзакциям с объединением данных из связанных таблиц.
+
+    Args:
+        period (str): Период, за который нужно получить данные. По умолчанию "all".
+        filters (Optional[Dict[str, Any]]): Фильтры для выборки данных. По умолчанию None.
+        paginate (bool): Флаг, указывающий, нужно ли использовать пагинацию. По умолчанию True.
+        page (int): Номер страницы для пагинации. По умолчанию 1.
+        page_size (int): Количество записей на странице. По умолчанию 20.
+
     Returns:
-        Список записей, соответствующих фильтрам.
+        Dict[str, Any]: Результат запроса, содержащий записи и метаданные (если используется пагинация).
     """
+    return await fetch_transactions(period, filters, paginate, page, page_size)
 
-    # Генерация уникального ключа для кеша
-    #cache_key = f"report:{period}:{start_date.date()}:{end_date.date()}"
 
-    # Подключение к Redis
-    #redis = await get_redis()
+@router.get("/{model_name}/{period}/report")
+async def get_report(
+    period: str = "all",
+    filters: Optional[Dict[str, Any]] = None,
+    paginate: bool = False,
+    page: int = 1,
+    page_size: int = 20
+) -> Dict[str, str]:
+    """
+    Формирование отчётных документов на основе данных о транзакциях.
 
-    # Попытка получить данные из кеша
-    #cached_report = await redis.get(cache_key)
-    #if cached_report:
-        #return json.loads(cached_report)
-    model = MODELS["Transaction"]
-    async with DB.get_session(commit=False) as session:
-        result = await MainGeneric(model).find_transactions(
-            session=session, 
-            filters=filters,
-            paginate=paginate,
-            page=page,
-            page_size=page_size,
-            period=period
-            )
+    Args:
+        period (str): Период, за который нужно получить данные. По умолчанию "all".
+        filters (Optional[Dict[str, Any]]): Фильтры для выборки данных. По умолчанию None.
+        paginate (bool): Флаг, указывающий, нужно ли использовать пагинацию. По умолчанию False.
+        page (int): Номер страницы для пагинации. По умолчанию 1.
+        page_size (int): Количество записей на странице. По умолчанию 20.
 
-        # Сохраняем отчёт в кеше на 1 час (3600 секунд)
-        #await redis.set(cache_key, json.dumps(report), expire=3600)
+    Returns:
+        Dict[str, str]: Сообщение об успешной выгрузке данных.
 
-        return result        
+    Raises:
+        HTTPException: Если произошла ошибка при сохранении данных.
+    """
+    try:
+        report = await fetch_transactions(period, filters, paginate, page, page_size)
+
+        # Определяем пути для сохранения файлов
+        filename_csv = 'data/output.csv'
+        filename_xlsx = 'data/output.xlsx'
+
+        # Создаем DataFrame из полученных данных
+        df = pd.DataFrame(report["records"])
+
+        # Сохраняем DataFrame в CSV и Excel
+        df.to_csv(filename_csv, index=False)
+        df.to_excel(filename_xlsx, index=False)
+
+        return {"msg": "Данные выгружены"}
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Произошла ошибка при выгрузке данных: {str(e)}"
+        )       
 
 
 @router.get("/user/get_one")

@@ -2,8 +2,7 @@ import asyncio
 
 from app.dao.base import engine, Base
 from app.dao.schemas import UserSchema
-from app.api.routers import home_page, get_user, add_one_model_data, add_many_model_data, get_many_model_data, get_many_transactions
-from app.api.reports import get_report
+from app.api.routers import home_page, get_user, add_one_model_data, add_many_model_data, get_many_model_data, get_many_transactions, get_report
 from TESTY.data_generator import generate_data
 
 
