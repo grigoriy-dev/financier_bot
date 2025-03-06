@@ -27,26 +27,30 @@ class GETY:
     async def test_get_many_transactions():
         # тестовые параметры
         period = "3months"
-        paginate = True
         filters = {"username": "LandoCalrissian", "name": "Доход"}
 
         records = await get_many_transactions(
             period=period,
             filters=filters
 )
-    
-        if paginate == False:
-            print("ONE BILLION TRANSACTION LIST > ...")
-        else:
-            print(f"Страница {records['page']} / {records['total_pages']}:")
-            for record in records["records"]:
-                print(record)
-            print("Всего записей:", records["total_records"])
+        print(f"Страница {records['page']} / {records['total_pages']}:")
+        for record in records["records"]:
+            print(record)
+        print("Всего записей:", records["total_records"])
     
 
     @staticmethod
     async def test_get_report():
-        pass
+        # тестовые параметры
+        period = "month"
+        filters = {"username": "LandoCalrissian", "name": "Доход"}
+
+        records = await get_report(
+            paginate=False, 
+            period=period,
+            filters=filters
+)      
+        print(records)
 
 
     @staticmethod

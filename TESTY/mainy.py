@@ -22,7 +22,7 @@ async def main():
     #await GETY.test_get_user()
 
     print("=== Получаем отчёт")
-    #await GETY.test_get_report()
+    await GETY.test_get_report()
 
     """Тесты POST запросов"""
     print("=== Добавляем одного пользователя:")
