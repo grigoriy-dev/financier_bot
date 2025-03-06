@@ -65,7 +65,7 @@ async def fetch_transactions(
     filters: Optional[Dict[str, Any]] = None,
     paginate: bool = False,
     page: int = 1,
-    page_size: int = 20
+    page_size: int = 10
 ) -> Dict[str, Any]:
     """
     Вспомогательная функция для получения данных о транзакциях.
@@ -139,7 +139,7 @@ async def get_many_transactions(
     filters: Optional[Dict[str, Any]] = None,
     paginate: bool = True,
     page: int = 1,
-    page_size: int = 20
+    page_size: int = 10
 ) -> Dict[str, Any]:
     """
     Получение записей по фильтрам за указанный период с пагинацией по Транзакциям с объединением данных из связанных таблиц.

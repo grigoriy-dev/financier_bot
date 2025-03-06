@@ -108,7 +108,7 @@ class MainGeneric:
             filters: Optional[Dict[str, Any]] = None,
             paginate: bool = True,
             page: int = 1,
-            page_size: int = 20,
+            page_size: int = 10,
             period: str = "all"
     ) -> Dict[str, Any]:
         """
