@@ -163,45 +163,39 @@ async def get_report(
     filters: Optional[Dict[str, Any]] = None,
     paginate: bool = False,
     page: int = 1,
-    page_size: int = 20
+    page_size: int = 20,
+    format: str = "csv"
 ) -> Dict[str, str]:
     """
-    Формирование отчётных документов на основе данных о транзакциях.
-
-    Args:
-        period (str): Период, за который нужно получить данные. По умолчанию "all".
-        filters (Optional[Dict[str, Any]]): Фильтры для выборки данных. По умолчанию None.
-        paginate (bool): Флаг, указывающий, нужно ли использовать пагинацию. По умолчанию False.
-        page (int): Номер страницы для пагинации. По умолчанию 1.
-        page_size (int): Количество записей на странице. По умолчанию 20.
-
-    Returns:
-        Dict[str, str]: Сообщение об успешной выгрузке данных.
-
-    Raises:
-        HTTPException: Если произошла ошибка при сохранении данных.
+    Формирование отчёта в формате CSV или XLSX на основе данных о транзакциях.
     """
     try:
         report = await fetch_transactions(period, filters, paginate, page, page_size)
 
-        # Определяем пути для сохранения файлов
-        filename_csv = 'data/output.csv'
-        filename_xlsx = 'data/output.xlsx'
-
         # Создаем DataFrame из полученных данных
         df = pd.DataFrame(report["records"])
 
-        # Сохраняем DataFrame в CSV и Excel
-        df.to_csv(filename_csv, index=False)
-        df.to_excel(filename_xlsx, index=False)
+        if format == "csv":
+            filename = 'data/output.csv'
+            df.to_csv(filename, index=False)
+            return {"msg": "Данные выгружены в CSV"}
+        elif format == "xlsx":
+            filename = 'data/output.xlsx'
+            df.to_excel(filename, index=False)
+            return {"msg": "Данные выгружены в XLSX"}
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="Неподдерживаемый формат выгрузки. Доступные форматы: csv, xlsx"
+            )
 
-        return {"msg": "Данные выгружены"}
+
 
     except Exception as e:
         raise HTTPException(
             status_code=500,
             detail=f"Произошла ошибка при выгрузке данных: {str(e)}"
-        )       
+        )   
 
 
 @router.get("/user/get_one")
