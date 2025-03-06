@@ -26,7 +26,6 @@
 - Логирование и обработка ошибок интегрированы в каждый эндпоинт.
 """
 
-from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
@@ -114,20 +113,6 @@ async def get_many_transactions(
     Returns:
         Список записей, соответствующих фильтрам.
     """
-        # Определяем период для отчёта
-    end_date = datetime.now()
-    if period == "month":
-        start_date = end_date - timedelta(days=30)
-    elif period == "3months":
-        start_date = end_date - timedelta(days=90)
-    elif period == "6months":
-        start_date = end_date - timedelta(days=180)
-    elif period == "year":
-        start_date = end_date - timedelta(days=365)
-    elif period == "all":
-        start_date = datetime.min  # Начало всех времён
-    else:
-        raise HTTPException(status_code=400, detail="Неподдерживаемый период")
 
     # Генерация уникального ключа для кеша
     #cache_key = f"report:{period}:{start_date.date()}:{end_date.date()}"
@@ -147,8 +132,7 @@ async def get_many_transactions(
             paginate=paginate,
             page=page,
             page_size=page_size,
-            start_date=start_date,
-            end_date=end_date
+            period=period
             )
 
         # Сохраняем отчёт в кеше на 1 час (3600 секунд)
@@ -157,8 +141,7 @@ async def get_many_transactions(
         return result        
 
 
-@router.get("/{model_name}/get_one")
-@handle_model_errors
+@router.get("/user/get_one")
 async def get_user(model, tg_id: int):
     """
     Получение одной записи по идентификатору пользователя (tg_id).
@@ -170,6 +153,7 @@ async def get_user(model, tg_id: int):
     Returns:
         Запись, соответствующая указанному tg_id.
     """
+    model = MODELS["User"]
     async with DB.get_session(commit=False) as session:
         result = await MainGeneric(model).find_user(session=session, tg_id=tg_id)
         return result

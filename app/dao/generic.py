@@ -20,6 +20,7 @@
 - Метод `find_transactions` предназначен для работы с моделью `Transaction` и объединяет данные из связанных таблиц.
 """
 
+from datetime import datetime, timedelta
 from typing import Type, Generic, List, Any, Dict, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
@@ -108,8 +109,7 @@ class MainGeneric:
             paginate: bool = True,
             page: int = 1,
             page_size: int = 20,
-            start_date: Optional[datetime] = None,
-            end_date: Optional[datetime] = None
+            period: str = "all"
     ) -> Dict[str, Any]:
         """
         Возвращает список записей с объединением данных из связанных таблиц.
@@ -129,7 +129,21 @@ class MainGeneric:
                 - "total_pages": Общее количество страниц.
         """
         
-        logger.info(f"Поиск записей {self.model.__name__} по фильтрам: {filters}")
+        end_date = datetime.now()
+        if period == "month":
+            start_date = end_date - timedelta(days=30)
+        elif period == "3months":
+            start_date = end_date - timedelta(days=90)
+        elif period == "6months":
+            start_date = end_date - timedelta(days=180)
+        elif period == "year":
+            start_date = end_date - timedelta(days=365)
+        elif period == "all":
+            start_date = datetime.min  # Начало всех времён
+        else:
+            raise HTTPException(status_code=400, detail="Неподдерживаемый период")
+
+        logger.info(f"Поиск записей {self.model.__name__} за период {period}по фильтрам: {filters}")
 
         if filters is not None and isinstance(filters, PyBaseModel):
             filter_dict = filters.dict()

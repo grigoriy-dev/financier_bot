@@ -8,13 +8,14 @@ from typing import List, Optional, Dict, Any
 import pandas as pd
 
 from app.dao.base import DatabaseSession as DB
-from app.api.routers import get_many_transactions
+from app.dao.generic import MainGeneric
+from app.dao.models import MODELS
 #from app.cache.redis import get_redis
 
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
 
-@router.get("/{period}")
+@router.get("/Transaction/{period}")
 async def get_report(
         period: str = "all",
         filters: Optional[Dict[str, Any]] = None,
@@ -22,8 +23,18 @@ async def get_report(
         page: int = 1,
         page_size: int = 20
         ):    
-    report = await get_many_transactions(paginate=False, period=period, filters=filters)
     
+    model = MODELS["Transaction"]
+    async with DB.get_session(commit=False) as session:
+        report = await MainGeneric(model).find_transactions(
+            session=session, 
+            filters=filters,
+            paginate=paginate,
+            page=page,
+            page_size=page_size,
+            period=period
+        )
+
     filename_csv = 'data/output.csv'
     filename_xlsx = 'data/output.xlsx'
 
