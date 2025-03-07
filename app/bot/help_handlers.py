@@ -10,6 +10,12 @@ async def help_command(message: types.Message):
     try:
         with open("app/bot/help.txt", "r", encoding="utf-8") as file:
             help_text = file.read()
-        await message.answer(help_text, reply_markup=get_main_keyboard())
+        
+        # Отправляем текст с MarkdownV2 разметкой
+        await message.answer(
+            help_text,
+            reply_markup=get_main_keyboard(),
+            parse_mode="MarkdownV2"  # Включаем поддержку MarkdownV2
+        )
     except FileNotFoundError:
-        await message.answer("Файл HELP не найден.", reply_markup=get_main_keyboard())
+        await message.answer("Файл с помощью не найден.", reply_markup=get_main_keyboard())
