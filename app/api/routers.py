@@ -107,12 +107,7 @@ async def home_page():
 
 @router.get("/{model_name}/get_many")
 @handle_model_errors
-async def get_many_model_data(
-        model, 
-        filters: Optional[Dict[str, Any]] = None,
-        page: int = 1,
-        page_size: int = 10
-        ):
+async def get_many_model_data(model, filters: Optional[Dict[str, Any]] = None):
     """
     Получение записей по фильтрам с пагинацией для указанной модели.
     
@@ -127,8 +122,6 @@ async def get_many_model_data(
         result = await MainGeneric(model).find_many(
             session=session, 
             filters=filters,
-            page=page,
-            page_size=page_size
             )
         return result
 

@@ -46,9 +46,7 @@ class MainGeneric:
 
     async def find_many(
             self, session: AsyncSession, 
-            filters: Optional[Dict[str, Any]] = None,
-            page: int = 1,
-            page_size: int = 10
+            filters: Optional[Dict[str, Any]] = None
             ) -> List[Any]:
         """
         Возвращает список записей с пагинацией на основе заданных фильтров.
@@ -78,27 +76,21 @@ class MainGeneric:
             count_query = select(func.count()).select_from(self.model).filter_by(**filter_dict)
             total_records = (await session.execute(count_query)).scalar()
 
-            # Вычисляем offset
-            offset = (page - 1) * page_size
-
             # Запрос для получения записей с пагинацией
             records_query = (
                 select(self.model)
                 .filter_by(**filter_dict)
                 .order_by(self.model.id.asc())
-                .limit(page_size)
-                .offset(offset)
             )
             records_result = await session.execute(records_query)
             records = records_result.scalars().all()
 
             # Возвращаем записи и общее количество
             return {
-                "page": page,
                 "records": records,
                 "total_records": total_records,
-                "total_pages": (total_records + page_size - 1) // page_size
             }
+
         except SQLAlchemyError as e:
             logger.error(f"Ошибка при поиске всех записей: {e}.")
             raise
