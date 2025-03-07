@@ -1,6 +1,17 @@
+"""
+Модуль для настройки и запуска Telegram-бота.
+
+Этот модуль отвечает за:
+- Загрузку переменных окружения из файла .env.
+- Инициализацию бота и диспетчера.
+- Регистрацию всех хэндлеров.
+- Запуск бота.
+"""
+
 from aiogram import Bot, Dispatcher
 import os
 from dotenv import load_dotenv
+
 # Импортируем хэндлеры
 from app.bot.handlers import router as main_router
 from app.bot.help_handlers import router as help_router
