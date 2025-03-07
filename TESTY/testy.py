@@ -15,8 +15,7 @@ class GETY:
     async def test_get_many_model_data():
         model_name = "User"
         filters = {}
-        records = await get_many_model_data(model_name, filters, page=1)
-        print(f"Страница {records['page']} / {records['total_pages']}:")
+        records = await get_many_model_data(model_name, filters)
         for record in records["records"]:
             print(record.to_dict())
         print("Всего записей:", records["total_records"])

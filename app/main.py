@@ -4,7 +4,7 @@ import uvicorn
 
 from app.api.routers import router as model_router
 from app.dao.base import engine, Base
-from app.bot.init_bot import dp, bot
+from app.bot.bot import dp, bot
 
 
 # Функция для инициализации схемы базы данных
