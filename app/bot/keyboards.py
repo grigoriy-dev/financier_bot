@@ -16,7 +16,7 @@ def get_subcategories_keyboard(subcategories):
 def get_report_period_keyboard():
     keyboard = ReplyKeyboardMarkup(keyboard=[
         [KeyboardButton(text="Месяц"), KeyboardButton(text="3 месяца")],
-        [KeyboardButton(text="Год"), KeyboardButton(text="Всё время")],
-        [KeyboardButton(text="Назад")]
+        [KeyboardButton(text="Полдгода"), KeyboardButton(text="Год")],
+        [KeyboardButton(text="Всё время")], [KeyboardButton(text="Назад")]
     ], resize_keyboard=True)
     return keyboard

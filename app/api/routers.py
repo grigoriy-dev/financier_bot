@@ -157,7 +157,7 @@ async def get_report(
     paginate: bool = False,
     page: int = 1,
     page_size: int = 20,
-    format: str = "csv"
+    format: str = "xlsx"
 ) -> Dict[str, str]:
     """
     Формирование отчёта в формате CSV или XLSX на основе данных о транзакциях.
@@ -181,8 +181,6 @@ async def get_report(
                 status_code=400,
                 detail="Неподдерживаемый формат выгрузки. Доступные форматы: csv, xlsx"
             )
-
-
 
     except Exception as e:
         raise HTTPException(

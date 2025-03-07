@@ -69,6 +69,7 @@ async def process_subcategory(message: types.Message, state: FSMContext):
     # Находим выбранную подкатегорию
     selected_subcategory = next((sc for sc in subcategories if sc["name"] == subcategory_name), None)
     if not selected_subcategory:
+        logger.info(f"Подкатегория {subcategories} не найдена.")
         await message.answer("Подкатегория не найдена.")
         return
 

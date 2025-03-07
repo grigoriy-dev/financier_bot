@@ -14,20 +14,35 @@ router = Router()
 async def report_command(message: types.Message, state: FSMContext):
     await message.answer("Выберите период для отчёта:", reply_markup=get_report_period_keyboard())
 
-@router.message(lambda message: message.text in ["Месяц", "3 месяца", "Год", "Всё время"])
+@router.message(lambda message: message.text in ["Месяц", "3 месяца", "Полгода" "Год", "Всё время", "Назад"])
 async def process_report_period(message: types.Message, state: FSMContext):
+    logger.info(f"message {message.text}")
     if message.text == "Назад":
+        await state.clear()
         await message.answer(
             "Выберите действие:",
             reply_markup=get_main_keyboard()
         )
         return
 
-    period = message.text
-    response = await get_report(period=period, format="csv")
+    periods = {
+        "Месяц": "month", 
+        "3 месяца":"3months", 
+        "Полгода": "6months",
+        "Год": "year", 
+        "Всё время": "all"
+    }
+    period = periods.get(message.text)
+    response = await get_report(period=period, format="xlsx")
 
-    if response.get("msg") == "Данные выгружены в CSV":
-        file = FSInputFile("data/output.csv")
+    if response.get("msg") in ["Данные выгружены в XLSX"]:
+        file = FSInputFile("data/output.xlsx")
         await message.answer_document(file, caption="Ваш отчёт готов!")
     else:
         await message.answer("Произошла ошибка при формировании отчёта.")
+
+     # Возврат в главное меню
+    await message.answer(
+        "Выберите действие:",
+        reply_markup=get_main_keyboard()
+    )   
