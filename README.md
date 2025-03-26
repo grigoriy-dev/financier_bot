@@ -1,8 +1,6 @@
 # Финансовый бот для Telegram 💰  
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://python.org)  
-[![Aiogram](https://img.shields.io/badge/Aiogram-3.18.0-green)](https://docs.aiogram.dev/)  
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115.11-lightgrey)](https://fastapi.tiangolo.com/)  
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://python.org)  [![Aiogram](https://img.shields.io/badge/Aiogram-3.18.0-green)](https://docs.aiogram.dev/)  [![FastAPI](https://img.shields.io/badge/FastAPI-0.115.11-lightgrey)](https://fastapi.tiangolo.com/)  
 
 Бот для удобного учета личных финансов с возможностью добавления доходов/расходов, категоризации и аналитики.  
 
